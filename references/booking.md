@@ -12,6 +12,7 @@
 | 1 | `nl_to_search.py parse` → `skill_search_client.py search --selection direct` | 选直飞/中转 |
 | 2 | `skill_booking_client.py parse-passengers --text "..."` | 「乘客信息确认无误」 |
 | 3 | `skill_booking_client.py verify --passenger-confirmed` | — |
+| 3b | 若 code **304016**（身份不一致） | 提示用户重新 **search**（新 APPKEY 后必做） |
 | 4 | 向用户展示 `userView.orderPreview` | 「确认生单」 |
 | 5 | `skill_booking_client.py order --user-confirmed` | — |
 

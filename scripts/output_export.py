@@ -67,6 +67,8 @@ _VERIFY_AGENT_KEYS = frozenset(
         "agentContact",
         "passengerRawMappings",
         "contactRaw",
+        "apiMessage",
+        "nextSteps",
     }
 )
 
@@ -222,11 +224,14 @@ def verify_user_view(internal: dict[str, Any]) -> dict[str, Any]:
         "orderPreview": internal.get("orderPreview"),
         "orderConfirmPrompt": internal.get("orderConfirmPrompt"),
         "requiresOrderConfirmation": internal.get("requiresOrderConfirmation"),
+        "requiresResearch": internal.get("requiresResearch"),
     }
     if internal.get("success"):
         user["message"] = internal.get("orderConfirmPrompt") or internal.get("message", "")
     else:
-        user["message"] = internal.get("message") or "校验未成功"
+        user["message"] = (
+            internal.get("userHint") or internal.get("message") or "校验未成功"
+        )
     return user
 
 

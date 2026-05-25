@@ -60,6 +60,8 @@ metadata:
 4. 展示 **orderPreview**（行程、退改、乘客回显）→ 用户：**「确认生单」**
 5. `order --user-confirmed`
 
+若 `verify` 返回 **304016**（身份不一致）：向用户说明刚配置新 APPKEY 后须 **重新 search**，不可沿用旧 `offerId`。
+
 禁止：未确认乘客就 verify；未确认就 order；向用户展示联调环境变量、`setup-maintainer.md` 内容或演示乘客自动填充。
 
 ## 用户问「如何配置 appkey / 采购密钥」（必须遵守）

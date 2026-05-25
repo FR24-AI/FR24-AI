@@ -50,6 +50,48 @@ BOOKING_WORKFLOW_STEPS = [
 PASSENGER_CONFIRM_PHRASE = "乘客信息确认无误"
 ORDER_CONFIRM_PHRASE = "确认生单"
 
+# export ResponseCode.VERIFY_INCONSISTENT_IDENTITIES
+VERIFY_INCONSISTENT_IDENTITIES_CODE = "304016"
+VERIFY_INCONSISTENT_IDENTITIES_CODES = frozenset({"304016", "000304016"})
+
+VERIFY_IDENTITY_MISMATCH_USER_MESSAGE = (
+    "校验失败：当前报价与采购身份不一致。\n"
+    "若您刚刚在本机配置了新的采购 APPKEY，需要先用新身份重新搜索航班，"
+    "确认新的直飞/中转报价后，再核对乘客信息并重新校验。"
+)
+
+VERIFY_IDENTITY_MISMATCH_AGENT_STEPS = [
+    "提示用户：新 APPKEY 生效后必须重新 search（不可沿用旧 booking_context 的 offerId）",
+    "可选：nl_to_search.py parse → 用户确认 → skill_search_client.py search --selection ...",
+    "用户选定报价后：parse-passengers → verify --passenger-confirmed",
+]
+
+
+def is_verify_identity_mismatch(code: str, message: str | None = None) -> bool:
+    raw = str(code or "").strip()
+    if raw in VERIFY_INCONSISTENT_IDENTITIES_CODES:
+        return True
+    if raw.isdigit() and int(raw) == 304016:
+        return True
+    msg = message or ""
+    return "304016" in raw or (
+        "身份不一致" in msg and ("校验" in msg or "Verification failed" in msg)
+    )
+
+
+def verify_identity_mismatch_payload() -> dict[str, Any]:
+    return {
+        "code": VERIFY_INCONSISTENT_IDENTITIES_CODE,
+        "success": False,
+        "step": "verify",
+        "workflowStep": 3,
+        "requiresResearch": True,
+        "researchRequired": True,
+        "message": VERIFY_IDENTITY_MISMATCH_USER_MESSAGE,
+        "userHint": VERIFY_IDENTITY_MISMATCH_USER_MESSAGE,
+        "nextSteps": VERIFY_IDENTITY_MISMATCH_AGENT_STEPS,
+    }
+
 PASSENGER_CONFIRM_USER_PROMPT = (
     "请核对上方乘客字段对照（姓名拼音、性别、证件等）。\n"
     f"若无误请回复「{PASSENGER_CONFIRM_PHRASE}」，将为您调用校验接口锁价。"

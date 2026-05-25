@@ -26,7 +26,9 @@ from booking_guidance import (  # noqa: E402
     PASSENGER_INFO_USER_PROMPT,
     build_booking_choices,
     build_itinerary_preview,
+    is_verify_identity_mismatch,
     selection_required,
+    verify_identity_mismatch_payload,
 )
 from fare_summarizer import summarize_response, _summarize_from_data  # noqa: E402
 from output_export import (  # noqa: E402
@@ -168,6 +170,13 @@ def format_verify_data(
         out["message"] = raw.get("message") or USER_BOOKING_USER_MESSAGE
         if raw.get("detail"):
             out["detail"] = raw.get("detail")
+        return out
+
+    if is_verify_identity_mismatch(code, raw.get("message")):
+        out = verify_identity_mismatch_payload()
+        out["traceId"] = raw.get("traceId")
+        out["processingTime"] = raw.get("processingTime")
+        out["apiMessage"] = raw.get("message")
         return out
 
     success = _is_success(code)
