@@ -81,11 +81,6 @@ def search(payload: dict, *, selection: str = "direct") -> dict:
     success = code in ("0", "000000")
     result = wrap_search(raw, mode)
     if not success:
-        if code == "307901":
-            msg = "今日搜索次数已用完（每日 10 次），请明日再试"
-            result["message"] = msg
-            if "userView" in result:
-                result["userView"]["message"] = msg
         return result
 
     agent = result.get("agentOnly") or {}

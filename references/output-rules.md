@@ -15,6 +15,12 @@
 - 可展示 **今日剩余搜索次数**（`remainingQuota` / `dailyLimit`）
 - 多条可订时，请用户选择「直飞」或「中转」
 
+## 演示配额用尽（307901）
+
+- 使用 `userView.message` / 顶层 `message`（引导至 [航路官网](https://www.flightroutes24.com/) 开通 API 采购并本机配置 APPKEY，**不要**只提示「明日再试」）
+- 可展示 `registerPortalUrl` 链接
+- 用户问具体配置步骤时，按 [user-appkey-config.md](./user-appkey-config.md) 回答
+
 ## 预订
 
 - **parse-passengers**：只展示 `passengerDisplay`、`contactDisplay` 与确认话术

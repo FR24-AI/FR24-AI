@@ -90,6 +90,14 @@ BOOKING_CONFIG_HINT = USER_BOOKING_AGENT_HINT
 
 SEARCH_ONLY_HINT = "（仅查价）当前未开通采购预订；注册并配置密钥后可继续预订。"
 
+USER_SKILL_QUOTA_EXCEEDED_MESSAGE = (
+    f"今日演示查价次数已用完（每日 {DAILY_LIMIT} 次）。"
+    f"若要继续查询，请打开 {REGISTER_PORTAL_URL} 注册并开通 API 采购，"
+    f"取得采购 APPKEY 后在本机完成密钥配置并重启 Claude Code，"
+    f"之后将使用您的采购账号搜索（不受演示日限额）。"
+    f"询问「如何配置 appkey」可查看配置步骤。"
+)
+
 
 def is_newapi_configured() -> bool:
     if not NEWAPI_APP_KEY:

@@ -85,7 +85,8 @@ metadata:
 
 ## 限制
 
-- 单程/往返；Skill 搜索每日 10 次/clientKey
+- 单程/往返；演示搜索每日 10 次/clientKey；配置采购 APPKEY 后搜索不受该限额
+- 演示配额用尽（307901）：引导用户至官网开通 API 采购并本机配置密钥（见 `user-appkey-config.md`），勿仅提示次日再试
 - 结果展示：直飞最低 + 中转最低（退改、行李见 `userView`）
 - 禁止：整段 stdout / `agentOnly` / `.cache` / 联调配置说明 作为用户可见内容
 - 生单为真实订单，须用户确认后提交

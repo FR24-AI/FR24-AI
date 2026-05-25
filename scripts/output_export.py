@@ -175,6 +175,8 @@ def search_user_view(internal: dict[str, Any]) -> dict[str, Any]:
     }
     if not internal.get("success"):
         user["message"] = internal.get("message") or "搜索未成功"
+        if internal.get("registerPortalUrl"):
+            user["registerPortalUrl"] = internal["registerPortalUrl"]
     else:
         user["message"] = build_search_user_message(user, demo=demo)
     return user

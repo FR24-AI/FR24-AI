@@ -14,6 +14,7 @@ from config import (  # noqa: E402
     SEARCH_ONLY_HINT,
     USER_BOOKING_AGENT_HINT,
     USER_BOOKING_USER_MESSAGE,
+    USER_SKILL_QUOTA_EXCEEDED_MESSAGE,
     booking_required_payload,
     is_booking_ready,
     is_newapi_configured,
@@ -120,7 +121,10 @@ def format_search_data(raw: dict, search_mode: str) -> dict[str, Any]:
             lines.append(SEARCH_ONLY_HINT)
             lines.append(USER_BOOKING_USER_MESSAGE)
     else:
-        lines.append(raw.get("message") or f"搜索失败：{code}")
+        if code == "307901":
+            lines.append(USER_SKILL_QUOTA_EXCEEDED_MESSAGE)
+        else:
+            lines.append(raw.get("message") or f"搜索失败：{code}")
 
     return {
         "success": success,

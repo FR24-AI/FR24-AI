@@ -132,7 +132,7 @@ python scripts/validate_user_output.py
 | 现象 | 处理 |
 |------|------|
 | HTTP 404 | 检查 `FR_SKILL_GRAY_HEADER`、域名、服务是否发布 |
-| 307901 | 当日配额用完，删除 `.cache/skill_client.json` 会生成新 key（新配额） |
+| 307901 | 演示日配额用完；引导用户到官网开通采购并在本机配置 APPKEY（见 `user-appkey-config.md`），采购搜索不扣演示配额 |
 | 307900 | clientKey 格式错误，需 32–128 位 `[A-Za-z0-9_-]` |
 | Agent 不触发 Skill | 确认 `SKILL.md` 在 skills 目录且 `description` 含触发场景 |
 
