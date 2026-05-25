@@ -24,7 +24,7 @@ _USER_FORBIDDEN = (
     "skill.local.env",
     "flight-deve",
     "fr24-skip",
-    "魏威",
+    "张三",
     "王明",
 )
 
@@ -68,7 +68,7 @@ def check_envelope(envelope: dict, *, action: str) -> list[str]:
         if token in msg:
             errors.append(f"message contains forbidden {token!r}")
 
-    if action == "parse" and envelope.get("status") == "success":
+    if action in ("parse", "refine") and envelope.get("status") == "success":
         if "payload" in uv:
             errors.append("userView must not contain payload")
         legs = uv.get("legs") or []
@@ -119,13 +119,34 @@ def main() -> int:
     if dep != "2026-06-02":
         errors.append(f"下周二 expected 2026-06-02, got {dep}")
 
+    r = run_json(
+        [
+            sys.executable,
+            str(_SCRIPTS / "nl_to_search.py"),
+            "refine",
+            "--text",
+            "\u8981CA\u822a\u53f8 \u4e2d\u534812\u70b9\u8d77\u98de",
+        ]
+    )
+    errors.extend(check_envelope(r, action="refine"))
+    if r.get("action") != "refine":
+        errors.append(f"refine action expected refine, got {r.get('action')}")
+    sf = (r.get("userView") or {}).get("searchFilters") or {}
+    if "CA" not in (sf.get("preferredCarrier") or []):
+        errors.append("refine userView.searchFilters missing CA")
+    prefs = (r.get("agentOnly") or {}).get("payload", {}).get("preferences", {})
+    if "CA" not in (prefs.get("preferredCarrier") or []):
+        errors.append("refine payload.preferences.preferredCarrier missing CA")
+    if not prefs.get("depTimeWindow"):
+        errors.append("refine payload missing depTimeWindow")
+
     # 乘客示例含张三
     from booking_guidance import PASSENGER_INFO_USER_PROMPT  # noqa: E402
 
     if "张三" not in PASSENGER_INFO_USER_PROMPT:
         errors.append("PASSENGER_INFO_USER_PROMPT missing 张三")
-    if "魏威" in PASSENGER_INFO_USER_PROMPT:
-        errors.append("PASSENGER_INFO_USER_PROMPT still has 魏威")
+    if "李四" in PASSENGER_INFO_USER_PROMPT:
+        errors.append("PASSENGER_INFO_USER_PROMPT still has 李四")
 
     # 配置失败文案
     pax_text = (
@@ -162,6 +183,12 @@ def main() -> int:
                 errors.append("search message missing direct offer line")
             if "退票" not in msg and "改期" not in msg:
                 errors.append("search message missing refund/change summary")
+            if prefs.get("preferredCarrier") and "筛选条件" not in msg:
+                errors.append("search with carrier filter should show 筛选条件 in message")
+        else:
+            code = str((s.get("agentOnly") or {}).get("code", ""))
+            if code not in ("307901", "404", "NETWORK_ERROR"):
+                errors.append(f"search failed unexpectedly: code={code}")
 
     out = {"ok": len(errors) == 0, "errors": errors}
     print(json.dumps(out, ensure_ascii=False, indent=2))

@@ -27,3 +27,18 @@
 | cabin | Y |
 | stops | 2（直飞填 0） |
 | resultCtrl | 15（≤20） |
+| preferredCarrier | 可选，IATA 列表，如 `["CA"]`（export 搜索时过滤） |
+| prohibitedCarrier | 可选，排除航司 |
+| depTimeWindow | 可选，`{"from":"11:00","to":"13:00"}`，仅客户端汇总时按首段起飞时间过滤 |
+| depTimeLabel | 可选，展示用，如「约12点起飞」 |
+
+## 重新搜索（refine）
+
+用户对结果不满意时：
+
+```bash
+python scripts/nl_to_search.py refine --text "要国航，中午12点左右起飞"
+python scripts/skill_search_client.py search --payload-file .cache/pending_search.json
+```
+
+`refine` 不扣配额；`search` 扣 1 次。

@@ -3,7 +3,7 @@
 对用户展示、下载内容遵循 [output-rules.md](./output-rules.md)（仅用 `userView`）。  
 环境变量与联调配置见 [setup-maintainer.md](./setup-maintainer.md)（**勿**展示给用户）。
 
-未配置采购密钥时仅 Skill 查价（`/api/skill/shopping`）。
+未配置采购密钥时仅 Skill 查价（`/ai/shopping`）。
 
 ## 标准顺序
 

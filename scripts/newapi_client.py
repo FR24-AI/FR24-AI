@@ -83,7 +83,7 @@ def _http_post(url: str, body: dict, headers: dict[str, str], timeout: int = 120
 
 
 def skill_shopping(payload: dict) -> dict:
-    """统一走 /api/skill/shopping：未配置密钥为演示模式；已配置则带 appkey + authentication。"""
+    """统一走 /ai/shopping：未配置密钥为演示模式；已配置则带 appkey + authentication。"""
     key = ensure_client_key()
     headers = {
         "Content-Type": "application/json; charset=utf-8",
@@ -112,7 +112,7 @@ def run_search(payload: dict) -> tuple[dict, str]:
     return skill_shopping(payload), mode
 
 
-def _newapi_headers() -> dict[str, str]:
+def _newapi_headers_base() -> dict[str, str]:
     headers = {
         "Content-Type": "application/json; charset=utf-8",
         "appkey": NEWAPI_APP_KEY,
@@ -122,8 +122,20 @@ def _newapi_headers() -> dict[str, str]:
         headers["gray"] = GRAY_HEADER
     if NEWAPI_SKIP_AUTH:
         headers["fr24-skip-auth"] = "1"
+    return headers
+
+
+def _newapi_headers() -> dict[str, str]:
+    headers = _newapi_headers_base()
     if NEWAPI_SKIP_IP_WHITELIST:
         headers[FR24_API_HEADER] = "1"
+    return headers
+
+
+def _newapi_channel_headers() -> dict[str, str]:
+    """校验 / 生单等 NewApi 写操作请求头。"""
+    headers = _newapi_headers_base()
+    headers[FR24_API_HEADER] = "1"
     return headers
 
 
@@ -181,7 +193,7 @@ def pricing(
     return _http_post(
         EXPORT_BASE_URL + PRICING_PATH,
         _attach_auth(body),
-        _newapi_headers(),
+        _newapi_channel_headers(),
     )
 
 
@@ -213,6 +225,6 @@ def booking(
     return _http_post(
         EXPORT_BASE_URL + BOOKING_PATH,
         _attach_auth(body),
-        _newapi_headers(),
+        _newapi_channel_headers(),
         timeout=180,
     )

@@ -15,6 +15,11 @@
 - 可展示 **今日剩余搜索次数**（`remainingQuota` / `dailyLimit`）
 - 多条可订时，请用户选择「直飞」或「中转」
 
+## 用户要改航司 / 起飞时间
+
+- 须 **refine → 再 search**（见 SKILL.md），不要只复述旧报价
+- 可展示 `searchFilters` / 筛选条件摘要；无匹配时说明「未找到符合条件」并建议放宽
+
 ## 演示配额用尽（307901）
 
 - 使用 `userView.message` / 顶层 `message`（引导至 [航路官网](https://www.flightroutes24.com/) 开通 API 采购并本机配置 APPKEY，**不要**只提示「明日再试」）

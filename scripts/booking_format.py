@@ -32,6 +32,7 @@ from booking_guidance import (  # noqa: E402
     verify_identity_mismatch_payload,
 )
 from fare_summarizer import summarize_response, _summarize_from_data  # noqa: E402
+from search_refinement import describe_preferences, extract_search_filters  # noqa: E402
 from output_export import (  # noqa: E402
     order_agent_only,
     order_user_view,
@@ -67,19 +68,27 @@ def _offer_block(label: str, offer: dict | None) -> dict[str, Any] | None:
     }
 
 
-def _normalize_newapi_raw(raw: dict) -> dict:
-    if raw.get("summary"):
+def _normalize_newapi_raw(raw: dict, *, filters: dict[str, Any] | None = None) -> dict:
+    if raw.get("summary") and not filters:
         return raw
     data = raw.get("data")
     if isinstance(data, dict):
-        return {**raw, "summary": _summarize_from_data(data)}
+        return {**raw, "summary": _summarize_from_data(data, filters=filters)}
     return raw
 
 
-def format_search_data(raw: dict, search_mode: str) -> dict[str, Any]:
+def format_search_data(
+    raw: dict,
+    search_mode: str,
+    *,
+    search_payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     skill_like = search_mode in ("skill", "skill-auth", "newapi")
+    prefs = (search_payload or {}).get("preferences") or {}
+    filters = extract_search_filters(prefs)
+    filter_note = describe_preferences(prefs)
     if search_mode == "newapi":
-        raw = _normalize_newapi_raw(raw)
+        raw = _normalize_newapi_raw(raw, filters=filters or None)
 
     code = str(raw.get("code", ""))
     if code in ("CONFIG_REQUIRED", "CONFIG_ERROR"):
@@ -89,9 +98,16 @@ def format_search_data(raw: dict, search_mode: str) -> dict[str, Any]:
         }
 
     success = _is_success(code)
-    summary = summarize_response(raw) if skill_like else (raw.get("summary") or {})
+    summary = (
+        summarize_response(raw, filters=filters or None)
+        if skill_like
+        else (raw.get("summary") or {})
+    )
     if search_mode == "newapi" and not summary.get("directLowest"):
-        summary = {**_summarize_from_data(raw.get("data") or {}), **summary}
+        summary = {
+            **_summarize_from_data(raw.get("data") or {}, filters=filters or None),
+            **summary,
+        }
 
     direct = _offer_block("直飞最低", summary.get("directLowest"))
     transfer = _offer_block("中转最低", summary.get("transferLowest"))
@@ -103,6 +119,14 @@ def format_search_data(raw: dict, search_mode: str) -> dict[str, Any]:
     if success:
         mode_label = "NewApi 采购搜索" if search_mode == "newapi" else "Skill 演示搜索"
         lines.append(f"（{mode_label}）")
+        if filter_note:
+            lines.append(f"筛选条件：{filter_note}")
+        if filter_note and not direct and not transfer:
+            matched = summary.get("matchedOfferCount", 0)
+            lines.append(
+                f"未找到符合上述条件的报价（共检索 {summary.get('totalOffers', 0)} 条）。"
+                f"请放宽航司或起飞时段后说「重新搜索」或补充条件。"
+            )
         if direct:
             lines.append(
                 f"【直飞最低】{direct['route']} {direct['flights']} "
@@ -143,12 +167,18 @@ def format_search_data(raw: dict, search_mode: str) -> dict[str, Any]:
         "registerPortalUrl": REGISTER_PORTAL_URL if not booking_enabled else None,
         "bookingConfigHint": USER_BOOKING_AGENT_HINT if not booking_enabled else None,
         "workflowSteps": BOOKING_WORKFLOW_STEPS if booking_ready else None,
+        "filterNote": filter_note or None,
         "message": "\n".join(lines),
     }
 
 
-def wrap_search(raw: dict, search_mode: str) -> dict[str, Any]:
-    internal = format_search_data(raw, search_mode)
+def wrap_search(
+    raw: dict,
+    search_mode: str,
+    *,
+    search_payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    internal = format_search_data(raw, search_mode, search_payload=search_payload)
     user_view = search_user_view(internal)
     return wrap_envelope(
         action="search",

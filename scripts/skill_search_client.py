@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""调用 export /api/skill/shopping。"""
+"""调用 export /ai/shopping。"""
 from __future__ import annotations
 
 import argparse
@@ -26,6 +26,7 @@ from config import (  # noqa: E402
     GRAY_HEADER,
     PENDING_PAYLOAD_FILE,
     SHOPPING_PATH,
+    SKILL_ID,
 )
 
 from booking_format import wrap_search  # noqa: E402
@@ -57,7 +58,7 @@ def quota_status() -> dict:
     key = ensure_client_key()
     # 服务端仅在搜索后返回 remainingQuota；本地仅展示 key 已就绪
     return {
-        "skill": "fr-newapi-search",
+        "skill": SKILL_ID,
         "status": "success",
         "action": "quota-status",
         "data": {"clientKeyReady": True, "clientKeyPrefix": key[:8] + "..."},
@@ -79,7 +80,7 @@ def search(payload: dict, *, selection: str = "direct") -> dict:
     raw, mode = run_search(payload)
     code = str(raw.get("code", ""))
     success = code in ("0", "000000")
-    result = wrap_search(raw, mode)
+    result = wrap_search(raw, mode, search_payload=payload)
     if not success:
         return result
 
@@ -119,7 +120,7 @@ def _http_error_hint(status_code: int) -> str | None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="fr-newapi-search skill client")
+    parser = argparse.ArgumentParser(description="fr24-ai skill client")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     sub.add_parser("ensure-key", help="生成或读取本地 clientKey")

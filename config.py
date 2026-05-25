@@ -43,13 +43,19 @@ PASSENGERS_FILE = CACHE_DIR / "passengers.json"
 CLIENT_KEY_HEADER = "X-Skill-Client-Key"
 DAILY_LIMIT = 10
 
+# 项目与 Skill 标识（对外信封、安装目录名）
+PROJECT_NAME = "FR24-AI"
+SKILL_ID = "fr24-ai"
+SKILL_DISPLAY_NAME = "Flightroutes24航路国际机票"
+SKILL_AUTHOR = "FR24"
+
 # export 根地址（deve 默认）
 EXPORT_BASE_URL = os.environ.get(
     "FR_SKILL_EXPORT_BASE_URL",
     "https://flight-deve.flightroutes24.com",
 ).rstrip("/")
 
-SHOPPING_PATH = "/api/skill/shopping"
+SHOPPING_PATH = "/ai/shopping"
 NEWAPI_SHOPPING_PATH = "/api/new/shopping"
 PRICING_PATH = "/api/new/pricing"
 BOOKING_PATH = "/api/new/booking"
@@ -128,7 +134,7 @@ def booking_config_required_envelope(action: str, step: str = "booking") -> dict
     """未配置采购密钥时，统一返回注册/申请引导（含 registerPortalUrl）。"""
     data = booking_required_payload(step=step)
     return {
-        "skill": "fr-newapi-search",
+        "skill": SKILL_ID,
         "status": "failure",
         "action": action,
         "data": data,

@@ -201,7 +201,7 @@ def cmd_order(args: argparse.Namespace) -> dict:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="fr-newapi-search booking client")
+    parser = argparse.ArgumentParser(description="fr24-ai booking client")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     p_parse = sub.add_parser("parse-passengers", help="解析乘客自然语言并生成核对表")

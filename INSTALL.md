@@ -1,139 +1,175 @@
-# fr-newapi-search 安装说明
+# FR24-AI 安装说明
 
-供其他同事 / Agent 安装本 Skill 的简明步骤。
+## 产品信息
 
-## 一、前置条件
+| 项 | 说明 |
+|----|------|
+| 项目名称 | FR24-AI |
+| Skill 标识 | `fr24-ai` |
+| 产品名称 | Flightroutes24 航路国际机票 |
+| 作者 | FR24 |
+| 能力范围 | 国际机票查询（演示/采购）、校验、生单（需配置采购密钥） |
 
-1. 账号系统存在采购 **`SKILL_DEMO`**
-2. 本机 **Python 3.10+**；预订需 `pip install -r requirements.txt`（pycryptodome、pypinyin）
+本文说明如何在 Cursor、Claude Code 等 Agent 环境中安装并启用本 Skill。
 
-## 二、获取 Skill 文件
+---
 
-任选一种方式：
+## 一、环境要求
+
+1. **服务端**：export 已发布 Skill 搜索接口 `POST /ai/shopping`，且账号体系已配置演示采购 **`SKILL_DEMO`**（演示查价）。
+2. **本机**：Python **3.10 及以上**。
+3. **预订功能**（可选）：执行 `pip install -r requirements.txt` 安装依赖（含 `pycryptodome`、`pypinyin`）。
+
+---
+
+## 二、获取安装包
+
+从公司内部仓库或发布包取得 **FR24-AI（fr24-ai）** 完整目录，确保包含 `SKILL.md`、`config.py`、`scripts/`、`references/` 等文件。
+
+**注意**：不要将 `.cache/`、`__pycache__/` 或他人机器上的 `skill_client.json`（含 `clientKey`）拷贝或提交到版本库。
+
+---
+
+## 三、安装到 Agent
+
+### 3.1 推荐目录
+
+| 方式 | 路径 | 说明 |
+|------|------|------|
+| 用户级（推荐） | `~/.cursor/skills/fr24-ai/` | 本机所有工作区可用 |
+| 项目级 | `<项目根>/.cursor/skills/fr24-ai/` | 随项目共享给团队 |
+
+其他 Agent 产品请将目录置于其 **skills 扫描路径**，且文件夹名与 `SKILL.md` 中 `name: fr24-ai` 一致。
+
+| 产品 | 常见 skills 路径 |
+|------|------------------|
+| Cursor | `~/.cursor/skills/fr24-ai/` 或 `.cursor/skills/fr24-ai/` |
+| Claude Code | `~/.claude/skills/fr24-ai/` |
+
+### 3.2 安装命令示例
+
+**Windows（用户级）：**
+
+```powershell
+xcopy /E /I "D:\path\to\FR24-AI" "%USERPROFILE%\.cursor\skills\fr24-ai"
+```
+
+**macOS / Linux：**
 
 ```bash
-# 方式 A：克隆公司 skills 仓库
-git clone <fr_skills 仓库地址>
-cd fr_skills/common/fr_newapi_search_skill
-
-# 方式 B：只拷贝整个目录
-# 将 common/fr_newapi_search_skill/ 复制到目标机器
+cp -r /path/to/FR24-AI ~/.cursor/skills/fr24-ai
 ```
 
-**不要**把 `.cache/`、`__pycache__/` 提交或拷贝给别人（含本机 `clientKey`）。
-
-## 三、安装到 Cursor Agent
-
-| 安装位置 | 路径 | 适用 |
-|----------|------|------|
-| 个人（推荐） | `~/.cursor/skills/fr-newapi-search/` | 本机所有项目可用 |
-| 项目 | `<项目>/.cursor/skills/fr-newapi-search/` | 随仓库分享给团队 |
-
-```bash
-# Windows 个人安装示例
-xcopy /E /I "D:\path\to\fr_skills\common\fr_newapi_search_skill" "%USERPROFILE%\.cursor\skills\fr-newapi-search"
-
-# macOS / Linux
-cp -r common/fr_newapi_search_skill ~/.cursor/skills/fr-newapi-search
-```
-
-安装后目录结构应包含：
+### 3.3 目录结构（安装后）
 
 ```
-fr-newapi-search/
-├── SKILL.md
+fr24-ai/
+├── SKILL.md              # Agent 指令与业务流程
+├── INSTALL.md            # 本安装说明
 ├── config.py
+├── requirements.txt
+├── skill.local.env.example
 ├── scripts/
 │   ├── nl_to_search.py
 │   ├── skill_search_client.py
-│   ├── skill_booking_client.py
-│   ├── booking_flow_test.py
-│   └── ...
+│   └── skill_booking_client.py
 └── references/
     ├── places.json
     ├── output-rules.md
     ├── user-appkey-config.md
-    ├── setup-maintainer.md
-    └── booking.md
+    ├── booking.md
+    └── search_params.md
 ```
 
-**重启 Cursor** 或重新打开 Agent 会话后，Skill 会按 `SKILL.md` 的 `description` 被自动匹配（触发词：查航班、搜机票等）。
+安装完成后 **重启 Cursor**（或重新打开 Agent 会话），以便根据 `SKILL.md` 的 `description` 自动匹配（如：查航班、搜机票、预订等）。
 
-## 四、安装到其他 Agent（Claude Code / OpenClaw / 自建）
+---
 
-原则相同：**把 skill 目录放到该产品的 skills 扫描路径**，并保证 Agent 能：
+## 四、配置
 
-1. 读取 `SKILL.md` 作为系统指令
-2. 用 **Shell** 执行 `scripts/*.py`
+### 4.1 网关（`skill.local.env`）
 
-| 产品 | 常见路径 |
-|------|----------|
-| Cursor | `~/.cursor/skills/<name>/` 或 `.cursor/skills/` |
-| Claude Code | `~/.claude/skills/<name>/` |
-| OpenClaw | 见各环境 `skills` 配置目录 |
+1. 复制 `skill.local.env.example` 为同目录下的 `skill.local.env`（该文件已列入 `.gitignore`）。
+2. 按运维提供的地址填写 **`FR_SKILL_EXPORT_BASE_URL`**；若环境要求灰度路由，填写 **`FR_SKILL_GRAY_HEADER`**。
+3. 勿在 `skill.local.env` 中写入采购密钥（`FR_NEWAPI_*` 不会被读取）。
 
-将 `name` 与 `SKILL.md` frontmatter 中 `name: fr-newapi-search` 保持一致即可。
+### 4.2 演示查价
 
-## 五、配置方式
+无需额外配置。首次搜索时本机会自动生成 `clientKey`（保存在 `.cache/skill_client.json`），请勿外传。
 
-### 5.1 网关（`skill.local.env`，已随 Skill 提供）
+### 4.3 采购搜索与预订
 
-复制 `skill.local.env.example` 为 `skill.local.env`（已 gitignore），按示例填写网关地址与 `gray` 头。
+在 [航路官网](https://www.flightroutes24.com/) 开通 API 采购后，按 **[references/user-appkey-config.md](./references/user-appkey-config.md)** 在本机 **用户环境变量** 中配置：
 
-**不要**在 `skill.local.env` 里写 `FR_NEWAPI_*`（`config.py` 会忽略）。
+- `FR_NEWAPI_APPKEY`
+- `FR_NEWAPI_SIGN_SECRET`
+- `FR_NEWAPI_AES_SECRET`
 
-### 5.2 采购密钥（仅系统环境变量）
+配置后需 **完全退出并重新打开** Agent 客户端。
 
-演示查价：**不要**设置采购相关变量。
-
-采购搜/订：按 **[references/user-appkey-config.md](./references/user-appkey-config.md)** 配置（对用户说明用）。  
-维护者 **deve 联调可选项** 见 **[references/setup-maintainer.md](./references/setup-maintainer.md)**（勿在 Agent 对话中展示）。
-
-验证：
+**配置是否生效**（在本机 Skill 目录执行）：
 
 ```powershell
-python -c "import config; print(config.EXPORT_BASE_URL, config.GRAY_HEADER, config.is_newapi_configured())"
+python -c "import config; print('configured:', config.is_newapi_configured()); print('booking_ready:', config.is_booking_ready())"
 ```
 
-## 六、验证安装
+| 输出 | 含义 |
+|------|------|
+| `configured: True` | 可进行采购账号搜索 |
+| `booking_ready: True` | 可进行校验、生单 |
 
-在 skill 目录下执行：
+---
+
+## 五、安装验证
+
+在 **fr24-ai** 目录下执行：
 
 ```bash
 python scripts/skill_search_client.py ensure-key
-python scripts/nl_to_search.py parse --text "深圳到曼谷 下周二 2个成人"
-python scripts/verify_summary.py --payload-file .cache/pending_search.json --client-key "<32位以上新key>"
+python scripts/nl_to_search.py parse --text "深圳到曼谷 6月1日 1成人"
 ```
 
-看到 `"ok": true` 且 `code: 000000` 即安装成功。
+若 `parse` 返回 `status: success` 且 `userView` 中含行程与日期，说明解析与本地环境正常。
 
-输出规范与脱敏校验：
+用户确认行程后，由 Agent 执行搜索（将消耗演示日配额，若已配置采购密钥则不受演示日限额约束）：
 
 ```bash
-set PYTHONIOENCODING=utf-8
-python scripts/validate_user_output.py
+python scripts/skill_search_client.py search --payload-file .cache/pending_search.json
 ```
 
-（会消耗 1 次搜索配额；仅测解析可加 `--skip-search`。）
+搜索成功时响应中 `code` 为 `000000`，且 `userView` 含直飞/中转报价摘要。
 
-全流程自动化测试见 [references/setup-maintainer.md](./references/setup-maintainer.md)。
+---
 
-## 七、配额与安全
+## 六、配额与安全
 
-- 演示模式（未配置 `FR_NEWAPI_APPKEY`）：每个 **`X-Skill-Client-Key`** 每日搜索次数由 export **`exportConf.properties`** 配置：
-  - `skill.search.default.cid` — 演示采购 CID
-  - `skill.search.daily.limit` — 日配额（默认 10）
-- 已配置采购密钥的搜索走同一 `/api/skill/shopping`，带 `authentication`，**不扣**演示日配额
-- 无需采购 appkey / appSecret
-- 勿将 `clientKey` 提交 git 或发给他人
+| 模式 | 条件 | 搜索接口 | 配额 |
+|------|------|----------|------|
+| 演示 | 未配置 `FR_NEWAPI_APPKEY` | `POST /ai/shopping` + `X-Skill-Client-Key` | 每 clientKey 每日限额（默认 10，以 export 配置为准） |
+| 采购 | 已配置 APPKEY 与签名密钥 | 同上，请求带 `authentication` 与头 `appkey` | 不扣演示日配额 |
 
-## 八、常见问题
+- 演示日配额用尽（`307901`）：引导用户开通采购并配置密钥，见 `user-appkey-config.md`。
+- 勿将 `clientKey`、采购密钥提交至 git 或在对话中发送给他人。
 
-| 现象 | 处理 |
+---
+
+## 七、常见问题
+
+| 现象 | 建议处理 |
+|------|----------|
+| HTTP 404 | 确认 `FR_SKILL_EXPORT_BASE_URL` 正确且 export 已发布 `/ai/shopping` |
+| `307901` | 演示配额已用完；开通采购并配置 APPKEY 后继续搜索 |
+| `307900` | `clientKey` 格式无效，删除 `.cache/skill_client.json` 后重新执行 `ensure-key` |
+| Agent 未触发 Skill | 确认 `SKILL.md` 位于 skills 目录且已重启 Agent；`description` 需包含查价相关场景 |
+
+---
+
+## 八、相关文档
+
+| 文档 | 用途 |
 |------|------|
-| HTTP 404 | 检查 `FR_SKILL_GRAY_HEADER`、域名、服务是否发布 |
-| 307901 | 演示日配额用完；引导用户到官网开通采购并在本机配置 APPKEY（见 `user-appkey-config.md`），采购搜索不扣演示配额 |
-| 307900 | clientKey 格式错误，需 32–128 位 `[A-Za-z0-9_-]` |
-| Agent 不触发 Skill | 确认 `SKILL.md` 在 skills 目录且 `description` 含触发场景 |
-
-详细用法见 [SKILL.md](./SKILL.md)。对用户展示报价时遵循 [references/output-rules.md](./references/output-rules.md)。
+| [SKILL.md](./SKILL.md) | Agent 业务流程与命令 |
+| [references/output-rules.md](./references/output-rules.md) | 对用户展示与下载规范 |
+| [references/user-appkey-config.md](./references/user-appkey-config.md) | 用户配置采购密钥 |
+| [references/booking.md](./references/booking.md) | 预订流程说明 |
+| [references/search_params.md](./references/search_params.md) | 搜索请求参数说明 |

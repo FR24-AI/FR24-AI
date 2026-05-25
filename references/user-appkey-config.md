@@ -40,7 +40,7 @@
 
 ## 验证（用户可在本机执行）
 
-在 Skill 目录（如 `~/.claude/skills/fr-newapi-search`）打开**新**终端：
+在 Skill 目录（如 `~/.claude/skills/fr24-ai`）打开**新**终端：
 
 ```powershell
 python -c "import config; print('configured:', config.is_newapi_configured()); print('booking_ready:', config.is_booking_ready())"

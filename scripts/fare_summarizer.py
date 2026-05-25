@@ -1,6 +1,7 @@
 """压缩 ApiSearchRs：直飞/中转各保留一条最低价，展示退改、行李、航班号。"""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 PAX_ADT = "ADT"
@@ -217,7 +218,75 @@ def _build_offer_summary(
     }
 
 
-def _summarize_from_data(data: dict[str, Any]) -> dict[str, Any]:
+def _clock_minutes(dep_time: str | None) -> int | None:
+    """从 depTime 提取当日分钟数（支持 yyyyMMddHHmm / yyyy-MM-dd HH:mm 等）。"""
+    if not dep_time:
+        return None
+    digits = re.sub(r"\D", "", str(dep_time))
+    if len(digits) >= 12:
+        hh, mm = int(digits[-4:-2]), int(digits[-2:])
+    elif len(digits) >= 4:
+        hh, mm = int(digits[:2]), int(digits[2:4])
+    else:
+        return None
+    if hh > 23 or mm > 59:
+        return None
+    return hh * 60 + mm
+
+
+def _window_bounds(window: dict[str, Any]) -> tuple[int | None, int | None]:
+    def _to_min(s: str | None) -> int | None:
+        if not s or ":" not in s:
+            return None
+        h, m = s.split(":", 1)
+        try:
+            return int(h) * 60 + int(m)
+        except ValueError:
+            return None
+
+    return _to_min(window.get("from")), _to_min(window.get("to"))
+
+
+def _offer_matches_filters(
+    offer: dict[str, Any],
+    seg_ids: list[str],
+    seg_map: dict[str, dict[str, Any]],
+    filters: dict[str, Any] | None,
+) -> bool:
+    if not filters:
+        return True
+    carriers = filters.get("preferredCarrier") or []
+    if carriers:
+        want = {str(c).upper() for c in carriers}
+        seg_carriers = {
+            str((seg_map.get(sid) or {}).get("carrier") or "").upper()
+            for sid in seg_ids
+        }
+        plating = str(offer.get("platingCarrier") or "").upper()
+        if not (want & seg_carriers) and plating not in want:
+            return False
+    window = filters.get("depTimeWindow")
+    if window:
+        start_min, end_min = _window_bounds(window)
+        if start_min is not None and end_min is not None:
+            first_seg = seg_map.get(seg_ids[0]) or {}
+            dep_min = _clock_minutes(first_seg.get("depTime"))
+            if dep_min is None:
+                return False
+            if start_min <= end_min:
+                if not (start_min <= dep_min <= end_min):
+                    return False
+            else:
+                if not (dep_min >= start_min or dep_min <= end_min):
+                    return False
+    return True
+
+
+def _summarize_from_data(
+    data: dict[str, Any],
+    *,
+    filters: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     offers = data.get("offers") or []
     leg_map = _build_leg_map(data.get("legs") or [])
     seg_map = _build_segment_map(data.get("segments") or [])
@@ -228,6 +297,7 @@ def _summarize_from_data(data: dict[str, Any]) -> dict[str, Any]:
     transfer_price: float | None = None
     direct_count = 0
     transfer_count = 0
+    matched_count = 0
 
     for offer in offers:
         if not isinstance(offer, dict):
@@ -235,6 +305,9 @@ def _summarize_from_data(data: dict[str, Any]) -> dict[str, Any]:
         seg_ids = _outbound_segment_ids(offer, leg_map)
         if not seg_ids:
             continue
+        if not _offer_matches_filters(offer, seg_ids, seg_map, filters):
+            continue
+        matched_count += 1
         is_direct = len(seg_ids) == 1
         if is_direct:
             direct_count += 1
@@ -260,23 +333,31 @@ def _summarize_from_data(data: dict[str, Any]) -> dict[str, Any]:
                 transfer_price = price
                 transfer_best = summary
 
-    return {
+    out = {
         "totalOffers": len(offers),
         "directCount": direct_count,
         "transferCount": transfer_count,
         "directLowest": direct_best,
         "transferLowest": transfer_best,
     }
+    if filters:
+        out["filterApplied"] = True
+        out["matchedOfferCount"] = matched_count
+    return out
 
 
-def summarize_response(body: dict[str, Any]) -> dict[str, Any]:
+def summarize_response(
+    body: dict[str, Any],
+    *,
+    filters: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """从 Skill 搜索响应生成展示用摘要。"""
     meta = body.get("skillMeta") or {}
     server_summary = body.get("summary")
-    if server_summary:
+    if server_summary and not filters:
         core = dict(server_summary)
     else:
-        core = _summarize_from_data(body.get("data") or {})
+        core = _summarize_from_data(body.get("data") or {}, filters=filters)
 
     return {
         **core,

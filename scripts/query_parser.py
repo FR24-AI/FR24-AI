@@ -9,6 +9,11 @@ from typing import Any
 from date_parser import parse_date
 from passenger_parser import DEFAULT, parse_passengers, validate_passengers
 from place_resolver import resolve_place_required
+from search_refinement import (  # noqa: E402
+    describe_preferences,
+    parse_carriers_from_text,
+    parse_dep_time_window,
+)
 
 CABIN_MAP = {
     "经济": "Y",
@@ -109,6 +114,10 @@ def build_payload_from_intent(intent: dict[str, Any]) -> tuple[dict | None, str 
         payload["preferences"]["preferredCarrier"] = prefs["preferredCarrier"]
     if prefs.get("prohibitedCarrier"):
         payload["preferences"]["prohibitedCarrier"] = prefs["prohibitedCarrier"]
+    if prefs.get("depTimeWindow"):
+        payload["preferences"]["depTimeWindow"] = prefs["depTimeWindow"]
+    if prefs.get("depTimeLabel"):
+        payload["preferences"]["depTimeLabel"] = prefs["depTimeLabel"]
 
     summary = _format_summary(payload, trip, intent.get("directOnly"))
     return payload, summary, None
@@ -212,6 +221,15 @@ def parse_simple_text(text: str) -> tuple[dict | None, str | None, str | None]:
     elif "经济" in raw:
         intent["cabinText"] = "经济舱"
 
+    carriers = parse_carriers_from_text(raw)
+    if carriers:
+        intent.setdefault("preferences", {})["preferredCarrier"] = carriers
+    window, time_label = parse_dep_time_window(raw)
+    if window:
+        intent.setdefault("preferences", {})["depTimeWindow"] = window
+        if time_label:
+            intent["preferences"]["depTimeLabel"] = time_label
+
     return build_payload_from_intent(intent)
 
 
@@ -220,11 +238,13 @@ def _format_summary(payload: dict, trip: str, direct_only: bool = False) -> str:
     parts = [f"{l['origin']}→{l['destination']} {l['depDate']}" for l in legs]
     p = payload
     direct_note = "，仅直飞" if direct_only or p.get("preferences", {}).get("stops") == 0 else ""
+    filter_note = describe_preferences(p.get("preferences") or {})
+    extra = f"，{filter_note}" if filter_note else ""
     return (
         f"{'往返' if trip == 'RT' else '单程'} "
         f"{' / '.join(parts)}，"
         f"{p['adultNum']}成人{p['childNum']}儿童{p['infantNum']}婴儿，"
-        f"舱等{p['preferences']['cabin']}{direct_note}"
+        f"舱等{p['preferences']['cabin']}{direct_note}{extra}"
     )
 
 

@@ -1,7 +1,15 @@
 """用户展示/下载视图：剥离调试与 Agent 内部字段。"""
 from __future__ import annotations
 
+import sys
+from pathlib import Path
 from typing import Any
+
+_ROOT = Path(__file__).resolve().parent.parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+from config import SKILL_ID  # noqa: E402
 
 # 不得出现在 userView / message（用户可见）中的片段
 _USER_TEXT_BLOCKLIST = (
@@ -204,7 +212,14 @@ def parse_user_view(intent_summary: str, payload: dict[str, Any]) -> dict[str, A
     ]
     cabin_map = {"Y": "经济舱", "C": "商务舱", "F": "头等舱", "P": "超级经济舱"}
     cabin = cabin_map.get(str(prefs.get("cabin", "Y")).upper(), prefs.get("cabin", "Y"))
-    return {
+    filters: dict[str, Any] = {}
+    if prefs.get("preferredCarrier"):
+        filters["preferredCarrier"] = prefs["preferredCarrier"]
+    if prefs.get("depTimeLabel"):
+        filters["depTimeLabel"] = prefs["depTimeLabel"]
+    elif prefs.get("depTimeWindow"):
+        filters["depTimeWindow"] = prefs["depTimeWindow"]
+    view: dict[str, Any] = {
         "intentSummary": intent_summary,
         "tripType": trip,
         "legs": leg_rows,
@@ -214,6 +229,9 @@ def parse_user_view(intent_summary: str, payload: dict[str, Any]) -> dict[str, A
         "cabin": cabin,
         "directOnly": prefs.get("stops") == 0,
     }
+    if filters:
+        view["searchFilters"] = filters
+    return view
 
 
 def verify_user_view(internal: dict[str, Any]) -> dict[str, Any]:
@@ -305,7 +323,7 @@ def wrap_envelope(
     if "passengerInfoPrompt" in uv:
         uv["passengerInfoPrompt"] = sanitize_user_text(str(uv["passengerInfoPrompt"]))
     out: dict[str, Any] = {
-        "skill": "fr-newapi-search",
+        "skill": SKILL_ID,
         "status": status,
         "action": action,
         "message": msg,
