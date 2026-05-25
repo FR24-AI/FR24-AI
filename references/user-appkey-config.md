@@ -1,7 +1,7 @@
 # 采购 APPKEY 配置（对用户说明用）
 
 用户询问「如何配置 appkey / 采购密钥 / 开通预订」时，**只按本文回答**。  
-**禁止**提及 `FR_NEWAPI_SKIP_*`、跳过白名单/签名、deve 联调、`setup-maintainer.md`。  
+**禁止**向用户说明内部联调、跳过校验/白名单等非公开配置方式。  
 **禁止**在对话中让用户粘贴密钥明文；引导用户在本机自行配置。
 
 ## 前提
@@ -48,13 +48,12 @@ python -c "import config; print('configured:', config.is_newapi_configured()); p
 
 | 输出 | 含义 |
 |------|------|
-| `configured: True` | 已识别 APPKEY（及签名或联调模式，以本机为准） |
+| `configured: True` | 已识别 APPKEY 与签名密钥 |
 | `booking_ready: True` | 三项密钥齐全，可预订 |
 
 若为 `False`，检查变量是否在 **用户变量**、名称是否拼写正确、是否已重启 Claude Code。
 
 ## Agent 禁止事项
 
-- 不要输出「跳过 IP 白名单 / 跳过签名验证」及 `FR_NEWAPI_SKIP_*` 相关命令  
-- 不要让用户把密钥发到对话里「帮你设置」  
-- 不要引用 `setup-maintainer.md`（维护者文档）
+- 不要向用户说明「跳过 IP 白名单 / 跳过签名验证」等内部配置  
+- 不要让用户把密钥发到对话里「帮你设置」

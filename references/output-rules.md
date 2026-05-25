@@ -41,9 +41,9 @@
 | 密钥与路径 | `clientKey`、`payloadFile`、`.cache/` 路径、完整 `payload` |
 | 原始 API | 完整 `ApiSearchRs`、`data.offers` 全量列表 |
 | 预订内部 ID | `verifyOfferId`、`offerId`（用户只需说直飞/中转或航班号） |
-| 联调产物 | `nl_scenario_test` 的 `report.json`、测试用 `client-key` |
-| 联调配置 | `FR_NEWAPI_SKIP_*`、`FR_BOOKING_TEST_*`、`FR_SKILL_GRAY_HEADER`、`flight-deve` 等环境变量名与 `setup-maintainer.md` 全文 |
-| 示例姓名 | 对用户说明时使用 **张三**（儿童示例可用 **张小三**），勿使用维护者文档中的其他示例名 |
+| 内部测试与维护材料 | 测试报告、维护文档全文、非生产网关说明 |
+| 环境变量名 | 勿向用户列出采购/网关相关的系统变量名 |
+| 示例姓名 | 对用户说明时使用 **张三**（儿童示例可用 **张小三**） |
 
 ## Agent 内部（可读 `agentOnly`）
 
@@ -53,8 +53,8 @@
 ## 用户问配置 appkey / 采购密钥
 
 - **只**按 [user-appkey-config.md](./user-appkey-config.md) 回答
-- **禁止**：`FR_NEWAPI_SKIP_*`、跳过白名单/签名、deve 联调段落、`setup-maintainer.md` 全文
-- **禁止**：让用户在聊天里提交密钥明文或代用户执行 `SetEnvironmentVariable`
+- **禁止**：说明内部联调、跳过校验/白名单等非用户配置项
+- **禁止**：让用户在聊天里提交密钥明文，或代用户在对话中执行环境变量配置命令
 
 ## 流程禁止
 

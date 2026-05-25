@@ -1,25 +1,24 @@
-# 预订流程（纯 Skill 脚本，无 MCP）
+# 预订流程
 
-对用户展示、下载内容遵循 [output-rules.md](./output-rules.md)（仅用 `userView`）。  
-环境变量与联调配置见 [setup-maintainer.md](./setup-maintainer.md)（**勿**展示给用户）。
+对用户展示、下载须遵循 [output-rules.md](./output-rules.md)（仅使用 `userView` 与顶层 `message`）。  
+安装与密钥配置见 [INSTALL.md](../INSTALL.md)、[user-appkey-config.md](./user-appkey-config.md)。
 
-未配置采购密钥时仅 Skill 查价（`/ai/shopping`）。
+未配置采购密钥时，仅支持演示查价（`POST /ai/shopping`），不支持校验与生单。
 
-## 标准顺序
+## 流程步骤
 
 | 步骤 | 命令 | 用户确认 |
 |------|------|----------|
-| 1 | `nl_to_search.py parse` → `skill_search_client.py search --selection direct` | 选直飞/中转 |
+| 1 | `nl_to_search.py parse` → `skill_search_client.py search --selection direct\|transfer` | 选择直飞或中转 |
 | 2 | `skill_booking_client.py parse-passengers --text "..."` | 「乘客信息确认无误」 |
 | 3 | `skill_booking_client.py verify --passenger-confirmed` | — |
-| 3b | 若 code **304016**（身份不一致） | 提示用户重新 **search**（新 APPKEY 后必做） |
-| 4 | 向用户展示 `userView.orderPreview` | 「确认生单」 |
+| 3b | 若返回 **304016**（身份不一致） | 须重新执行 **search**（新配置 APPKEY 后必做） |
+| 4 | 展示 `userView.orderPreview` | 「确认生单」 |
 | 5 | `skill_booking_client.py order --user-confirmed` | — |
 
-## 命令示例（Agent 内部）
+## 命令示例（Agent 在 Skill 根目录执行）
 
 ```bash
-cd fr_newapi_search_skill
 set PYTHONIOENCODING=utf-8
 
 python scripts/nl_to_search.py parse --text "深圳到曼谷 6月2日"
@@ -32,17 +31,19 @@ python scripts/skill_booking_client.py verify --passenger-confirmed
 python scripts/skill_booking_client.py order --user-confirmed
 ```
 
-缓存文件（勿提供给用户下载）：
+本地缓存（勿作为用户下载内容）：
 
-- `.cache/pending_search.json` — 搜索请求体
-- `.cache/booking_context.json` — 选定报价
-- `.cache/passengers.json` — 已解析乘客与联系人
+| 文件 | 说明 |
+|------|------|
+| `.cache/pending_search.json` | 搜索请求体 |
+| `.cache/booking_context.json` | 选定报价与校验上下文 |
+| `.cache/passengers.json` | 已解析乘客与联系人 |
 
-## 乘客自然语言示例（对用户说明时可引用）
+## 乘客信息示例（对用户说明时可引用）
 
 ```
 乘客：张三，男，1990-01-15，护照 E12345678，2030-12-31 到期，国籍 CN。
 联系人：张三，手机 13800138000，邮箱 zhangsan@example.com
 ```
 
-解析输出 `passengerDisplay`：展示「张三 → ZHANG/SAN（拼音 zhangsan）」等字段对照。
+`parse-passengers` 成功后，向用户展示 `passengerDisplay` 中的姓名拼音、证件等字段对照，待用户确认后再校验。
