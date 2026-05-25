@@ -1,5 +1,7 @@
 # FR24-AI 安装说明
 
+项目概览见 **[README.md](./README.md)**（中文）/ **[README.en.md](./README.en.md)**（English）。
+
 ## 产品信息
 
 | 项 | 说明 |
@@ -64,6 +66,8 @@ cp -r /path/to/FR24-AI ~/.cursor/skills/fr24-ai
 
 ```
 fr24-ai/
+├── README.md             # 项目说明（中文）
+├── README.en.md          # Project overview (English)
 ├── SKILL.md              # Agent 指令与业务流程
 ├── INSTALL.md            # 本安装说明
 ├── config.py
